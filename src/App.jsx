@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "./supabase";
 
 function todayKey() {
   const d = new Date();
@@ -13,11 +14,6 @@ function formatDate(str) {
   const days = ["일","월","화","수","목","금","토"];
   return { full:`${y}년 ${parseInt(m)}월 ${parseInt(d)}일`, dow:days[new Date(str).getDay()]+"요일" };
 }
-function load(key, fallback) {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
-  catch { return fallback; }
-}
-function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
 const ACCENT = "#1A1A1A";
 const SOFT   = "#F5F3EF";
@@ -26,31 +22,99 @@ const BORDER = "#E8E4DC";
 const FONT   = "'Noto Sans KR','Apple SD Gothic Neo',sans-serif";
 const DAYS   = ["일","월","화","수","목","금","토"];
 
-function HistoryCalendar({ daily, today }) {
-  const now = new Date(today);
+// ── 로그인 화면 ──────────────────────────────────────────
+function LoginScreen() {
+  const [loading, setLoading] = useState(false);
+
+  async function handleGoogleLogin() {
+    setLoading(true);
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin }
+    });
+  }
+
+  return (
+    <div style={{ minHeight:"100vh", background:SOFT, fontFamily:FONT,
+      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:32, padding:24 }}>
+      <div style={{ textAlign:"center" }}>
+        <div style={{ fontSize:36, fontWeight:700, letterSpacing:"0.06em", color:ACCENT, marginBottom:8 }}>하루결</div>
+        <div style={{ fontSize:15, color:"#999" }}>매일 한 줄, 습관 하나씩</div>
+      </div>
+      <button onClick={handleGoogleLogin} disabled={loading}
+        style={{ display:"flex", alignItems:"center", gap:12, background:"#fff",
+          border:`1px solid ${BORDER}`, borderRadius:14, padding:"14px 28px",
+          fontSize:15, color:ACCENT, cursor:"pointer", fontFamily:FONT,
+          boxShadow:"0 2px 12px rgba(0,0,0,0.08)", fontWeight:500 }}>
+        <svg width="20" height="20" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        {loading ? "로그인 중..." : "구글로 시작하기"}
+      </button>
+      <div style={{ fontSize:12, color:"#CCC", textAlign:"center", lineHeight:1.8 }}>
+        로그인하면 어느 기기에서든<br/>내 기록을 볼 수 있어요
+      </div>
+    </div>
+  );
+}
+
+// ── 달력 기록 ─────────────────────────────────────────────
+function HistoryCalendar({ userId }) {
+  const now = new Date();
+  const today = todayKey();
   const [yr, setYr] = useState(now.getFullYear());
   const [mo, setMo] = useState(now.getMonth());
   const [sel, setSel] = useState(null);
   const [histView, setHistView] = useState("calendar");
+  const [records, setRecords] = useState({});
+  const [habits, setHabits] = useState([]);
+
+  const month = `${yr}-${String(mo+1).padStart(2,"0")}`;
+
+  useEffect(() => {
+    loadData();
+  }, [yr, mo]);
+
+  async function loadData() {
+    const { data: recs } = await supabase
+      .from("daily_records")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("date", `${month}-01`)
+      .lte("date", `${month}-31`);
+    const map = {};
+    (recs||[]).forEach(r => { map[r.date] = r; });
+    setRecords(map);
+
+    const { data: hh } = await supabase
+      .from("habits")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("month", month)
+      .order("order_index");
+    setHabits(hh||[]);
+  }
 
   function getPct(dateStr) {
-    const hh = load(`habits-${dateStr.slice(0,7)}`, []);
-    if (!hh.length) return null;
-    const dd = daily[dateStr];
-    return Math.round(hh.filter(h => dd?.checks?.[h.id]).length / hh.length * 100);
+    if (!habits.length) return null;
+    const rec = records[dateStr];
+    const checks = rec?.checks || {};
+    const done = habits.filter(h => checks[h.id]).length;
+    return Math.round(done / habits.length * 100);
   }
+
   function dotColor(pct) {
     if (pct === null) return null;
     if (pct === 100) return CHECK;
-    if (pct >= 50)  return "#74B49B";
+    if (pct >= 50) return "#74B49B";
     return "#D0C9BC";
   }
 
   const totalDays = new Date(yr, mo+1, 0).getDate();
   const firstDay  = new Date(yr, mo, 1).getDay();
-  const selHabits = sel ? load(`habits-${sel.slice(0,7)}`, []) : [];
-  const selData   = sel ? daily[sel] : null;
-  const selPct    = sel ? getPct(sel) : null;
   const isNextDis = yr > now.getFullYear() || (yr === now.getFullYear() && mo >= now.getMonth());
 
   function prevMo() { if(mo===0){setYr(y=>y-1);setMo(11);}else setMo(m=>m-1); setSel(null); }
@@ -58,9 +122,12 @@ function HistoryCalendar({ daily, today }) {
 
   const graphDays = Array.from({length:totalDays},(_,i)=>{
     const day = i+1;
-    const dateStr = `${yr}-${String(mo+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+    const dateStr = `${month}-${String(day).padStart(2,"0")}`;
     return { day, dateStr, pct: getPct(dateStr) };
   });
+
+  const selRec = sel ? records[sel] : null;
+  const selPct = sel ? getPct(sel) : null;
 
   return (
     <div style={s.page}>
@@ -89,7 +156,7 @@ function HistoryCalendar({ daily, today }) {
           {Array.from({length:firstDay}).map((_,i)=><div key={"e"+i}/>)}
           {Array.from({length:totalDays}).map((_,i)=>{
             const day=i+1;
-            const dateStr=`${yr}-${String(mo+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+            const dateStr=`${month}-${String(day).padStart(2,"0")}`;
             const pct=getPct(dateStr); const dot=dotColor(pct);
             const isToday=dateStr===today; const isSel=dateStr===sel; const isFuture=dateStr>today;
             return (
@@ -97,7 +164,7 @@ function HistoryCalendar({ daily, today }) {
                 style={{...s.calCell,...(isSel?{background:ACCENT,borderColor:ACCENT}:{}),...(isToday&&!isSel?{borderColor:CHECK,borderWidth:"1.5px"}:{}),...(isFuture?{opacity:0.2,cursor:"default"}:{})}}>
                 <span style={{...s.calDayNum,color:isSel?"#fff":isToday?CHECK:ACCENT}}>{day}</span>
                 {dot&&!isSel&&<div style={{...s.calDot,background:dot}}/>}
-                {isSel&&daily[dateStr]&&<div style={{...s.calDot,background:"#fff"}}/>}
+                {isSel&&records[dateStr]&&<div style={{...s.calDot,background:"#fff"}}/>}
               </button>
             );
           })}
@@ -118,13 +185,13 @@ function HistoryCalendar({ daily, today }) {
               </div>
               {selPct!==null&&<div style={{...s.detailBadge,background:selPct===100?CHECK:selPct>=50?"#74B49B":"#D0C9BC"}}>{selPct}%</div>}
             </div>
-            {selData?.note&&<div><div style={s.detailLabel}>한 줄</div><div style={s.detailNoteText}>"{selData.note}"</div></div>}
-            {selHabits.length>0&&(
+            {selRec?.note&&<div><div style={s.detailLabel}>한 줄</div><div style={s.detailNoteText}>"{selRec.note}"</div></div>}
+            {habits.length>0&&(
               <div>
                 <div style={s.detailLabel}>습관</div>
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {selHabits.map(h=>{
-                    const done=!!selData?.checks?.[h.id];
+                  {habits.map(h=>{
+                    const done=!!(selRec?.checks?.[h.id]);
                     return (
                       <div key={h.id} style={{display:"flex",alignItems:"center",gap:10}}>
                         <div style={{...s.detailCheck,...(done?{background:CHECK,borderColor:CHECK}:{})}}>{done&&<span style={{color:"#fff",fontSize:11,fontWeight:700}}>✓</span>}</div>
@@ -135,7 +202,7 @@ function HistoryCalendar({ daily, today }) {
                 </div>
               </div>
             )}
-            {!selData&&<div style={{color:"#CCC",fontSize:13,fontFamily:FONT,textAlign:"center",padding:"8px 0"}}>이 날은 기록이 없어요</div>}
+            {!selRec&&<div style={{color:"#CCC",fontSize:13,fontFamily:FONT,textAlign:"center",padding:"8px 0"}}>이 날은 기록이 없어요</div>}
           </div>
         )}
       </>)}
@@ -150,7 +217,7 @@ function HistoryCalendar({ daily, today }) {
                 const h=pct!==null?Math.max(4,pct):0;
                 const bg=pct===100?CHECK:pct>=50?"#74B49B":pct!==null?"#D0C9BC":"#F0EDE8";
                 return (
-                  <div key={day} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                  <div key={day} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center"}}>
                     <div style={{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isFuture?"#F0EDE8":bg,outline:isToday?`2px solid ${CHECK}`:"none",opacity:isFuture?0.3:1,transition:"height 0.4s ease"}}/>
                   </div>
                 );
@@ -180,77 +247,124 @@ function HistoryCalendar({ daily, today }) {
               );
             })()}
           </div>
-          {(()=>{
-            const mHabits=load(`habits-${yr}-${String(mo+1).padStart(2,"0")}`,[]);
-            if(!mHabits.length)return null;
-            const pastDays=graphDays.filter(d=>d.dateStr<=today);
-            return (
-              <div style={{background:"#fff",border:`1px solid ${BORDER}`,borderRadius:16,padding:"20px"}}>
-                <div style={{fontSize:12,color:"#AAA",fontFamily:FONT,marginBottom:14,letterSpacing:"0.1em",textTransform:"uppercase"}}>습관별 달성</div>
-                <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                  {mHabits.map(h=>{
-                    const done=pastDays.filter(d=>daily[d.dateStr]?.checks?.[h.id]).length;
-                    const pct=pastDays.length>0?Math.round(done/pastDays.length*100):0;
-                    return (
-                      <div key={h.id}>
-                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-                          <span style={{fontSize:13,fontFamily:FONT,color:ACCENT}}>{h.name}</span>
-                          <span style={{fontSize:12,fontFamily:FONT,color:"#AAA"}}>{done}/{pastDays.length}일 · {pct}%</span>
-                        </div>
-                        <div style={{height:6,background:"#F0EDE8",borderRadius:99,overflow:"hidden"}}>
-                          <div style={{height:"100%",width:`${pct}%`,borderRadius:99,background:pct===100?CHECK:pct>=50?"#74B49B":"#D0C9BC",transition:"width 0.5s ease"}}/>
-                        </div>
+          {habits.length>0&&(
+            <div style={{background:"#fff",border:`1px solid ${BORDER}`,borderRadius:16,padding:"20px"}}>
+              <div style={{fontSize:12,color:"#AAA",fontFamily:FONT,marginBottom:14,letterSpacing:"0.1em",textTransform:"uppercase"}}>습관별 달성</div>
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                {habits.map(h=>{
+                  const done=graphDays.filter(d=>d.dateStr<=today&&records[d.dateStr]?.checks?.[h.id]).length;
+                  const pastDays=graphDays.filter(d=>d.dateStr<=today).length;
+                  const pct=pastDays>0?Math.round(done/pastDays*100):0;
+                  return (
+                    <div key={h.id}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                        <span style={{fontSize:13,fontFamily:FONT,color:ACCENT}}>{h.name}</span>
+                        <span style={{fontSize:12,fontFamily:FONT,color:"#AAA"}}>{done}/{pastDays}일 · {pct}%</span>
                       </div>
-                    );
-                  })}
-                </div>
+                      <div style={{height:6,background:"#F0EDE8",borderRadius:99,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:`${pct}%`,borderRadius:99,background:pct===100?CHECK:pct>=50?"#74B49B":"#D0C9BC",transition:"width 0.5s ease"}}/>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })()}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
 
+// ── 메인 앱 ───────────────────────────────────────────────
 export default function App() {
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [view, setView] = useState("today");
+  const [habits, setHabits] = useState([]);
+  const [todayRec, setTodayRec] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [newHabit, setNewHabit] = useState("");
+  const [justSaved, setJustSaved] = useState(false);
+
   const today = todayKey();
   const month = monthKey();
   const {full, dow} = formatDate(today);
 
-  const [habits, setHabits] = useState(()=>load(`habits-${month}`,[]));
-  const [daily,  setDaily]  = useState(()=>load("daily",{}));
-  const [view,   setView]   = useState("today");
-  const [editMode,  setEditMode]  = useState(false);
-  const [newHabit,  setNewHabit]  = useState("");
-  const [justSaved, setJustSaved] = useState(false);
+  useEffect(()=>{
+    supabase.auth.getSession().then(({data:{session}})=>{
+      setSession(session); setLoading(false);
+    });
+    supabase.auth.onAuthStateChange((_,session)=>{ setSession(session); setLoading(false); });
+  },[]);
 
-  useEffect(()=>{save(`habits-${month}`,habits);},[habits]);
-  useEffect(()=>{save("daily",daily);},[daily]);
+  useEffect(()=>{
+    if(session) { loadHabits(); loadTodayRec(); }
+  },[session]);
 
-  const todayData    = daily[today] || {checks:{},note:""};
-  const checkedCount = habits.filter(h=>todayData.checks?.[h.id]).length;
-  const pct          = habits.length>0?Math.round(checkedCount/habits.length*100):0;
+  async function loadHabits() {
+    const { data } = await supabase.from("habits").select("*")
+      .eq("user_id", session.user.id).eq("month", month).order("order_index");
+    setHabits(data||[]);
+  }
 
-  function toggleCheck(id) { setDaily(p=>({...p,[today]:{...todayData,checks:{...todayData.checks,[id]:!todayData.checks?.[id]}}})); }
-  function setNote(val) { setDaily(p=>({...p,[today]:{...todayData,note:val}})); }
-  function handleSave() { setJustSaved(true); setTimeout(()=>setJustSaved(false),2000); }
-  function addHabit() {
-    if(!newHabit.trim()||habits.length>=10)return;
-    setHabits(p=>[...p,{id:Date.now().toString(),name:newHabit.trim()}]);
+  async function loadTodayRec() {
+    const { data } = await supabase.from("daily_records").select("*")
+      .eq("user_id", session.user.id).eq("date", today).single();
+    setTodayRec(data||{checks:{},note:""});
+  }
+
+  async function toggleCheck(id) {
+    const checks = { ...(todayRec?.checks||{}), [id]: !todayRec?.checks?.[id] };
+    setTodayRec(prev=>({...prev, checks}));
+    await supabase.from("daily_records").upsert({
+      user_id: session.user.id, date: today,
+      checks, note: todayRec?.note||""
+    }, { onConflict: "user_id,date" });
+  }
+
+  async function setNote(val) {
+    setTodayRec(prev=>({...prev, note:val}));
+  }
+
+  async function handleSave() {
+    await supabase.from("daily_records").upsert({
+      user_id: session.user.id, date: today,
+      checks: todayRec?.checks||{}, note: todayRec?.note||""
+    }, { onConflict: "user_id,date" });
+    setJustSaved(true);
+    setTimeout(()=>setJustSaved(false), 2000);
+  }
+
+  async function addHabit() {
+    if(!newHabit.trim()||habits.length>=10) return;
+    const { data } = await supabase.from("habits").insert({
+      user_id: session.user.id, name: newHabit.trim(),
+      month, order_index: habits.length
+    }).select().single();
+    setHabits(prev=>[...prev, data]);
     setNewHabit("");
   }
-  function removeHabit(id) { setHabits(p=>p.filter(h=>h.id!==id)); }
 
-  let streak=0;
-  for(let i=0;i<60;i++){
-    const d=new Date(today); d.setDate(d.getDate()-i);
-    const k=d.toISOString().slice(0,10);
-    const hh=load(`habits-${k.slice(0,7)}`,[]);
-    if(!hh.length)break;
-    if(hh.filter(h=>daily[k]?.checks?.[h.id]).length===hh.length)streak++;
-    else break;
+  async function removeHabit(id) {
+    await supabase.from("habits").delete().eq("id", id);
+    setHabits(prev=>prev.filter(h=>h.id!==id));
   }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+  }
+
+  const checkedCount = habits.filter(h=>todayRec?.checks?.[h.id]).length;
+  const pct = habits.length>0 ? Math.round(checkedCount/habits.length*100) : 0;
+
+  if(loading) return (
+    <div style={{minHeight:"100vh",background:SOFT,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FONT,color:"#AAA"}}>
+      불러오는 중...
+    </div>
+  );
+
+  if(!session) return <LoginScreen />;
 
   return (
     <div style={s.root}>
@@ -258,13 +372,17 @@ export default function App() {
       <header style={s.header}>
         <div style={s.headerInner}>
           <div style={s.logo}>하루결</div>
-          <div style={s.tabs}>
-            {[["today","오늘"],["habits","습관"],["history","기록"]].map(([id,label])=>(
-              <button key={id} onClick={()=>setView(id)} style={{...s.tab,...(view===id?s.tabActive:{})}}>{label}</button>
-            ))}
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={s.tabs}>
+              {[["today","오늘"],["habits","습관"],["history","기록"]].map(([id,label])=>(
+                <button key={id} onClick={()=>setView(id)} style={{...s.tab,...(view===id?s.tabActive:{})}}>{label}</button>
+              ))}
+            </div>
+            <button onClick={handleLogout} style={{background:"none",border:"none",color:"#BBB",fontSize:12,cursor:"pointer",fontFamily:FONT}}>로그아웃</button>
           </div>
         </div>
       </header>
+
       <main style={s.main}>
         {view==="today"&&(
           <div style={s.page}>
@@ -288,7 +406,7 @@ export default function App() {
             {habits.length>0&&(
               <div style={s.checkList}>
                 {habits.map(h=>{
-                  const checked=!!todayData.checks?.[h.id];
+                  const checked=!!todayRec?.checks?.[h.id];
                   return (
                     <button key={h.id} onClick={()=>toggleCheck(h.id)}
                       style={{...s.checkItem,background:checked?"#F0F7F4":"#fff",borderColor:checked?"#2D6A4F33":BORDER}}>
@@ -301,12 +419,13 @@ export default function App() {
             )}
             <div>
               <div style={s.noteLabel}>오늘 한 줄</div>
-              <input value={todayData.note||""} onChange={e=>setNote(e.target.value)} placeholder="오늘 하루를 한 문장으로..." style={s.noteInput} maxLength={80}/>
+              <input value={todayRec?.note||""} onChange={e=>setNote(e.target.value)}
+                placeholder="오늘 하루를 한 문장으로..." style={s.noteInput} maxLength={80}/>
             </div>
             <button onClick={handleSave} style={{...s.saveBtn,...(justSaved?{background:CHECK}:{})}}>{justSaved?"✓  저장됐어요":"저장"}</button>
-            {streak>1&&<div style={s.streakBadge}>🔥 {streak}일 연속 달성 중</div>}
           </div>
         )}
+
         {view==="habits"&&(
           <div style={s.page}>
             <div style={s.pageTitle}>
@@ -314,7 +433,8 @@ export default function App() {
                 <div style={s.pageTitleMain}>이달의 습관</div>
                 <div style={s.pageTitleSub}>{new Date().getMonth()+1}월 · 최대 10개</div>
               </div>
-              <button onClick={()=>setEditMode(!editMode)} style={{...s.editToggle,...(editMode?{background:ACCENT,color:"#fff",borderColor:ACCENT}:{})}}>{editMode?"완료":"편집"}</button>
+              <button onClick={()=>setEditMode(!editMode)}
+                style={{...s.editToggle,...(editMode?{background:ACCENT,color:"#fff",borderColor:ACCENT}:{})}}>{editMode?"완료":"편집"}</button>
             </div>
             <div style={s.habitList}>
               {habits.map((h,i)=>(
@@ -328,13 +448,16 @@ export default function App() {
             </div>
             {habits.length<10?(
               <div style={s.addRow}>
-                <input value={newHabit} onChange={e=>setNewHabit(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addHabit()} placeholder="새 습관 추가..." style={s.addInput} maxLength={30}/>
+                <input value={newHabit} onChange={e=>setNewHabit(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&addHabit()}
+                  placeholder="새 습관 추가..." style={s.addInput} maxLength={30}/>
                 <button onClick={addHabit} style={s.addBtn}>+</button>
               </div>
             ):<div style={s.maxNote}>10개 모두 설정됐어요 👍</div>}
           </div>
         )}
-        {view==="history"&&<HistoryCalendar daily={daily} today={today}/>}
+
+        {view==="history"&&<HistoryCalendar userId={session.user.id}/>}
       </main>
     </div>
   );
@@ -368,7 +491,6 @@ const s = {
   noteLabel:{fontSize:11,letterSpacing:"0.12em",color:"#AAA",marginBottom:8,textTransform:"uppercase",fontFamily:FONT},
   noteInput:{width:"100%",background:"#fff",border:`1px solid ${BORDER}`,borderRadius:14,padding:"14px 16px",fontSize:15,color:ACCENT,outline:"none",boxSizing:"border-box",fontFamily:FONT},
   saveBtn:{width:"100%",padding:"15px",background:ACCENT,border:"none",borderRadius:14,color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer",transition:"all 0.25s",letterSpacing:"0.08em",fontFamily:FONT},
-  streakBadge:{textAlign:"center",fontSize:13,color:"#888",fontFamily:FONT},
   pageTitle:{display:"flex",alignItems:"flex-start",justifyContent:"space-between"},
   pageTitleMain:{fontSize:20,fontWeight:600,letterSpacing:"0.02em",fontFamily:FONT},
   pageTitleSub:{fontSize:13,color:"#999",marginTop:4,fontFamily:FONT},

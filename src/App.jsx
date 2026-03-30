@@ -36,16 +36,39 @@ function LoginScreen() {
 
   return (
     <div style={{ minHeight:"100vh", background:SOFT, fontFamily:FONT,
-      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:32, padding:24 }}>
-      <div style={{ textAlign:"center" }}>
-        <div style={{ fontSize:36, fontWeight:700, letterSpacing:"0.06em", color:ACCENT, marginBottom:8 }}>하루결</div>
-        <div style={{ fontSize:15, color:"#999" }}>매일 한 줄, 습관 하나씩</div>
+      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:0, padding:24 }}>
+
+      {/* 로고 */}
+      <div style={{ textAlign:"center", marginBottom:40 }}>
+        <div style={{ fontSize:38, fontWeight:700, letterSpacing:"0.06em", color:ACCENT }}>하루결</div>
+        <div style={{ fontSize:15, color:"#999", marginTop:8 }}>매일 한 줄, 습관 하나씩</div>
       </div>
+
+      {/* 기능 미리보기 */}
+      <div style={{ display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:320, marginBottom:40 }}>
+        {[
+          ["✍️", "오늘 한 줄", "하루를 한 문장으로 기록해요"],
+          ["✅", "습관 체크", "이달의 습관 최대 10개 설정"],
+          ["📊", "달성률 확인", "달력과 그래프로 한눈에"],
+        ].map(([emoji, title, desc]) => (
+          <div key={title} style={{ display:"flex", alignItems:"center", gap:14,
+            background:"#fff", border:`1px solid ${BORDER}`, borderRadius:14, padding:"14px 16px" }}>
+            <div style={{ fontSize:22, width:36, textAlign:"center" }}>{emoji}</div>
+            <div>
+              <div style={{ fontSize:14, fontWeight:600, color:ACCENT, fontFamily:FONT }}>{title}</div>
+              <div style={{ fontSize:12, color:"#AAA", marginTop:2, fontFamily:FONT }}>{desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 구글 로그인 버튼 */}
       <button onClick={handleGoogleLogin} disabled={loading}
         style={{ display:"flex", alignItems:"center", gap:12, background:"#fff",
           border:`1px solid ${BORDER}`, borderRadius:14, padding:"14px 28px",
           fontSize:15, color:ACCENT, cursor:"pointer", fontFamily:FONT,
-          boxShadow:"0 2px 12px rgba(0,0,0,0.08)", fontWeight:500 }}>
+          boxShadow:"0 2px 12px rgba(0,0,0,0.08)", fontWeight:500, width:"100%", maxWidth:320,
+          justifyContent:"center" }}>
         <svg width="20" height="20" viewBox="0 0 48 48">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
           <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -54,7 +77,8 @@ function LoginScreen() {
         </svg>
         {loading ? "로그인 중..." : "구글로 시작하기"}
       </button>
-      <div style={{ fontSize:12, color:"#CCC", textAlign:"center", lineHeight:1.8 }}>
+
+      <div style={{ fontSize:12, color:"#CCC", textAlign:"center", lineHeight:1.8, marginTop:20 }}>
         로그인하면 어느 기기에서든<br/>내 기록을 볼 수 있어요
       </div>
     </div>

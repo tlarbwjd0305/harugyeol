@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import html2canvas from "html2canvas";
 import { supabase } from "./supabase";
 
 function todayKey() {
@@ -89,6 +90,19 @@ function LoginScreen() {
 function HistoryCalendar({ userId }) {
   const now = new Date();
   const today = todayKey();
+  const cardRef = useRef(null);
+
+async function exportImage() {
+  if (!cardRef.current) return;
+  const canvas = await html2canvas(cardRef.current, {
+    backgroundColor: "#F5F3EF",
+    scale: 2,
+  });
+  const link = document.createElement("a");
+  link.download = `하루결_${today}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
   const [yr, setYr] = useState(now.getFullYear());
   const [mo, setMo] = useState(now.getMonth());
   const [sel, setSel] = useState(null);
@@ -426,7 +440,13 @@ export default function App() {
                 <span style={s.ringPct}>{pct}<span style={s.ringUnit}>%</span></span>
               </div>
             </div>
-            <div style={s.ringCaption}>{habits.length>0?`${checkedCount} / ${habits.length} 완료`:"습관을 먼저 설정해보세요"}</div>
+            <div style={s.ringCaption}>{habits.length>0?`${checkedCount} / ${habits.length} 완료`:(
+  <button onClick={()=>setView("habits")}
+    style={{background:ACCENT,color:"#fff",border:"none",borderRadius:20,
+      padding:"8px 20px",fontSize:13,cursor:"pointer",fontFamily:FONT,fontWeight:600}}>
+    + 습관 설정하기
+  </button>
+)}</div>
             {habits.length>0&&(
               <div style={s.checkList}>
                 {habits.map(h=>{
@@ -447,6 +467,13 @@ export default function App() {
                 placeholder="오늘 하루를 한 문장으로..." style={s.noteInput} maxLength={80}/>
             </div>
             <button onClick={handleSave} style={{...s.saveBtn,...(justSaved?{background:CHECK}:{})}}>{justSaved?"✓  저장됐어요":"저장"}</button>
+            <button onClick={exportImage}
+  style={{ width:"100%", padding:"13px",
+    background:"#fff", border:`1px solid ${BORDER}`,
+    borderRadius:14, color:ACCENT, fontSize:14,
+    cursor:"pointer", fontFamily:FONT, fontWeight:500 }}>
+  📷 오늘 기록 이미지로 저장
+</button>
           </div>
         )}
 

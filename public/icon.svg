@@ -1,0 +1,15 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="100" fill="#F5F3EF"/>
+  <circle cx="256" cy="230" r="140" fill="none" stroke="#E8E4DC" stroke-width="20"/>
+  <circle cx="256" cy="230" r="140" fill="none" stroke="#2D6A4F" stroke-width="20"
+    stroke-linecap="round"
+    stroke-dasharray="880"
+    stroke-dashoffset="220"
+    transform="rotate(-90 256 230)"/>
+  <text x="256" y="260" text-anchor="middle"
+    font-family="'Apple SD Gothic Neo','Noto Sans KR',sans-serif"
+    font-size="130" font-weight="700" fill="#1A1A1A">결</text>
+  <circle cx="206" cy="420" r="14" fill="#2D6A4F"/>
+  <circle cx="256" cy="420" r="14" fill="#2D6A4F"/>
+  <circle cx="306" cy="420" r="14" fill="#E8E4DC"/>
+</svg>

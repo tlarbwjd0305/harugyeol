@@ -23,149 +23,93 @@ const BORDER = "#E8E4DC";
 const FONT   = "'Noto Sans KR','Apple SD Gothic Neo',sans-serif";
 const DAYS   = ["일","월","화","수","목","금","토"];
 
-// ── 로그인 화면 ──────────────────────────────────────────
 function LoginScreen() {
   const [loading, setLoading] = useState(false);
-
   async function handleGoogleLogin() {
     setLoading(true);
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin }
-    });
+    await supabase.auth.signInWithOAuth({ provider:"google", options:{ redirectTo:window.location.origin } });
   }
-
   return (
-    <div style={{ minHeight:"100vh", background:SOFT, fontFamily:FONT,
-      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:0, padding:24 }}>
-
-      {/* 로고 */}
-      <div style={{ textAlign:"center", marginBottom:40 }}>
-        <div style={{ fontSize:38, fontWeight:700, letterSpacing:"0.06em", color:ACCENT }}>하루결</div>
-        <div style={{ fontSize:15, color:"#999", marginTop:8 }}>매일 한 줄, 습관 하나씩</div>
+    <div style={{minHeight:"100vh",background:SOFT,fontFamily:FONT,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0,padding:24}}>
+      <div style={{textAlign:"center",marginBottom:40}}>
+        <div style={{fontSize:38,fontWeight:700,letterSpacing:"0.06em",color:ACCENT}}>하루결</div>
+        <div style={{fontSize:15,color:"#999",marginTop:8}}>매일 한 줄, 습관 하나씩</div>
       </div>
-
-      {/* 기능 미리보기 */}
-      <div style={{ display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:320, marginBottom:40 }}>
-        {[
-          ["✍️", "오늘 한 줄", "하루를 한 문장으로 기록해요"],
-          ["✅", "습관 체크", "이달의 습관 최대 10개 설정"],
-          ["📊", "달성률 확인", "달력과 그래프로 한눈에"],
-        ].map(([emoji, title, desc]) => (
-          <div key={title} style={{ display:"flex", alignItems:"center", gap:14,
-            background:"#fff", border:`1px solid ${BORDER}`, borderRadius:14, padding:"14px 16px" }}>
-            <div style={{ fontSize:22, width:36, textAlign:"center" }}>{emoji}</div>
+      <div style={{display:"flex",flexDirection:"column",gap:12,width:"100%",maxWidth:320,marginBottom:40}}>
+        {[["✍️","오늘 한 줄","하루를 한 문장으로 기록해요"],["✅","습관 체크","이달의 습관 최대 10개 설정"],["📊","달성률 확인","달력과 그래프로 한눈에"]].map(([emoji,title,desc])=>(
+          <div key={title} style={{display:"flex",alignItems:"center",gap:14,background:"#fff",border:`1px solid ${BORDER}`,borderRadius:14,padding:"14px 16px"}}>
+            <div style={{fontSize:22,width:36,textAlign:"center"}}>{emoji}</div>
             <div>
-              <div style={{ fontSize:14, fontWeight:600, color:ACCENT, fontFamily:FONT }}>{title}</div>
-              <div style={{ fontSize:12, color:"#AAA", marginTop:2, fontFamily:FONT }}>{desc}</div>
+              <div style={{fontSize:14,fontWeight:600,color:ACCENT,fontFamily:FONT}}>{title}</div>
+              <div style={{fontSize:12,color:"#AAA",marginTop:2,fontFamily:FONT}}>{desc}</div>
             </div>
           </div>
         ))}
       </div>
-
-      {/* 구글 로그인 버튼 */}
       <button onClick={handleGoogleLogin} disabled={loading}
-        style={{ display:"flex", alignItems:"center", gap:12, background:"#fff",
-          border:`1px solid ${BORDER}`, borderRadius:14, padding:"14px 28px",
-          fontSize:15, color:ACCENT, cursor:"pointer", fontFamily:FONT,
-          boxShadow:"0 2px 12px rgba(0,0,0,0.08)", fontWeight:500, width:"100%", maxWidth:320,
-          justifyContent:"center" }}>
+        style={{display:"flex",alignItems:"center",gap:12,background:"#fff",border:`1px solid ${BORDER}`,borderRadius:14,padding:"14px 28px",fontSize:15,color:ACCENT,cursor:"pointer",fontFamily:FONT,boxShadow:"0 2px 12px rgba(0,0,0,0.08)",fontWeight:500,width:"100%",maxWidth:320,justifyContent:"center"}}>
         <svg width="20" height="20" viewBox="0 0 48 48">
           <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
           <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
           <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
           <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
         </svg>
-        {loading ? "로그인 중..." : "구글로 시작하기"}
+        {loading?"로그인 중...":"구글로 시작하기"}
       </button>
-
-      <div style={{ fontSize:12, color:"#CCC", textAlign:"center", lineHeight:1.8, marginTop:20 }}>
-        로그인하면 어느 기기에서든<br/>내 기록을 볼 수 있어요
-      </div>
+      <div style={{fontSize:12,color:"#CCC",textAlign:"center",lineHeight:1.8,marginTop:20}}>로그인하면 어느 기기에서든<br/>내 기록을 볼 수 있어요</div>
     </div>
   );
 }
 
-// ── 달력 기록 ─────────────────────────────────────────────
 function HistoryCalendar({ userId }) {
   const now = new Date();
   const today = todayKey();
-  const cardRef = useRef(null);
-
-async function exportImage() {
-  if (!cardRef.current) return;
-  const canvas = await html2canvas(cardRef.current, {
-    backgroundColor: "#F5F3EF",
-    scale: 2,
-  });
-  const link = document.createElement("a");
-  link.download = `하루결_${today}.png`;
-  link.href = canvas.toDataURL("image/png");
-  link.click();
-}
   const [yr, setYr] = useState(now.getFullYear());
   const [mo, setMo] = useState(now.getMonth());
   const [sel, setSel] = useState(null);
   const [histView, setHistView] = useState("calendar");
   const [records, setRecords] = useState({});
   const [habits, setHabits] = useState([]);
-
   const month = `${yr}-${String(mo+1).padStart(2,"0")}`;
 
-  useEffect(() => {
-    loadData();
-  }, [yr, mo]);
+  useEffect(()=>{ loadData(); },[yr, mo]);
 
   async function loadData() {
-    const { data: recs } = await supabase
-      .from("daily_records")
-      .select("*")
-      .eq("user_id", userId)
-      .gte("date", `${month}-01`)
-      .lte("date", `${month}-31`);
+    const { data: recs } = await supabase.from("daily_records").select("*").eq("user_id",userId).gte("date",`${month}-01`).lte("date",`${month}-31`);
     const map = {};
-    (recs||[]).forEach(r => { map[r.date] = r; });
+    (recs||[]).forEach(r=>{ map[r.date]=r; });
     setRecords(map);
-
-    const { data: hh } = await supabase
-      .from("habits")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("month", month)
-      .order("order_index");
+    const { data: hh } = await supabase.from("habits").select("*").eq("user_id",userId).eq("month",month).order("order_index");
     setHabits(hh||[]);
   }
 
   function getPct(dateStr) {
-    if (!habits.length) return null;
-    const rec = records[dateStr];
-    const checks = rec?.checks || {};
-    const done = habits.filter(h => checks[h.id]).length;
-    return Math.round(done / habits.length * 100);
+    if(!habits.length) return null;
+    const checks = records[dateStr]?.checks||{};
+    return Math.round(habits.filter(h=>checks[h.id]).length/habits.length*100);
   }
-
   function dotColor(pct) {
-    if (pct === null) return null;
-    if (pct === 100) return CHECK;
-    if (pct >= 50) return "#74B49B";
+    if(pct===null) return null;
+    if(pct===100) return CHECK;
+    if(pct>=50) return "#74B49B";
     return "#D0C9BC";
   }
 
-  const totalDays = new Date(yr, mo+1, 0).getDate();
-  const firstDay  = new Date(yr, mo, 1).getDay();
-  const isNextDis = yr > now.getFullYear() || (yr === now.getFullYear() && mo >= now.getMonth());
+  const totalDays = new Date(yr,mo+1,0).getDate();
+  const firstDay  = new Date(yr,mo,1).getDay();
+  const isNextDis = yr>now.getFullYear()||(yr===now.getFullYear()&&mo>=now.getMonth());
 
   function prevMo() { if(mo===0){setYr(y=>y-1);setMo(11);}else setMo(m=>m-1); setSel(null); }
   function nextMo() { if(isNextDis)return; if(mo===11){setYr(y=>y+1);setMo(0);}else setMo(m=>m+1); setSel(null); }
 
   const graphDays = Array.from({length:totalDays},(_,i)=>{
-    const day = i+1;
-    const dateStr = `${month}-${String(day).padStart(2,"0")}`;
-    return { day, dateStr, pct: getPct(dateStr) };
+    const day=i+1;
+    const dateStr=`${month}-${String(day).padStart(2,"0")}`;
+    return {day,dateStr,pct:getPct(dateStr)};
   });
 
-  const selRec = sel ? records[sel] : null;
-  const selPct = sel ? getPct(sel) : null;
+  const selRec = sel?records[sel]:null;
+  const selPct = sel?getPct(sel):null;
 
   return (
     <div style={s.page}>
@@ -179,17 +123,13 @@ async function exportImage() {
           <button onClick={()=>setHistView("graph")} style={{...s.tab,...(histView==="graph"?s.tabActive:{}),padding:"5px 12px"}}>📊 그래프</button>
         </div>
       </div>
-
       <div style={{display:"flex",gap:6,alignItems:"center",justifyContent:"center"}}>
         <button onClick={prevMo} style={s.calNavBtn}>‹</button>
         <span style={{fontSize:14,fontWeight:600,minWidth:72,textAlign:"center",fontFamily:FONT}}>{yr}년 {mo+1}월</span>
         <button onClick={nextMo} style={{...s.calNavBtn,opacity:isNextDis?0.3:1}} disabled={isNextDis}>›</button>
       </div>
-
-      {histView==="calendar" && (<>
-        <div style={s.calDayHeaders}>
-          {DAYS.map(d=><div key={d} style={{...s.calDayHeader,color:d==="일"?"#E07070":d==="토"?"#7090C8":"#AAA"}}>{d}</div>)}
-        </div>
+      {histView==="calendar"&&(<>
+        <div style={s.calDayHeaders}>{DAYS.map(d=><div key={d} style={{...s.calDayHeader,color:d==="일"?"#E07070":d==="토"?"#7090C8":"#AAA"}}>{d}</div>)}</div>
         <div style={s.calGrid}>
           {Array.from({length:firstDay}).map((_,i)=><div key={"e"+i}/>)}
           {Array.from({length:totalDays}).map((_,i)=>{
@@ -217,10 +157,7 @@ async function exportImage() {
         {sel&&(
           <div style={s.detailCard}>
             <div style={s.detailHeader}>
-              <div>
-                <div style={s.detailDate}>{formatDate(sel).full}</div>
-                <div style={s.detailDow}>{formatDate(sel).dow}</div>
-              </div>
+              <div><div style={s.detailDate}>{formatDate(sel).full}</div><div style={s.detailDow}>{formatDate(sel).dow}</div></div>
               {selPct!==null&&<div style={{...s.detailBadge,background:selPct===100?CHECK:selPct>=50?"#74B49B":"#D0C9BC"}}>{selPct}%</div>}
             </div>
             {selRec?.note&&<div><div style={s.detailLabel}>한 줄</div><div style={s.detailNoteText}>"{selRec.note}"</div></div>}
@@ -244,7 +181,6 @@ async function exportImage() {
           </div>
         )}
       </>)}
-
       {histView==="graph"&&(
         <div style={{display:"flex",flexDirection:"column",gap:20}}>
           <div style={{background:"#fff",border:`1px solid ${BORDER}`,borderRadius:16,padding:"20px 16px"}}>
@@ -254,18 +190,10 @@ async function exportImage() {
                 const isToday=dateStr===today; const isFuture=dateStr>today;
                 const h=pct!==null?Math.max(4,pct):0;
                 const bg=pct===100?CHECK:pct>=50?"#74B49B":pct!==null?"#D0C9BC":"#F0EDE8";
-                return (
-                  <div key={day} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center"}}>
-                    <div style={{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isFuture?"#F0EDE8":bg,outline:isToday?`2px solid ${CHECK}`:"none",opacity:isFuture?0.3:1,transition:"height 0.4s ease"}}/>
-                  </div>
-                );
+                return <div key={day} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center"}}><div style={{width:"100%",height:h,borderRadius:"3px 3px 0 0",background:isFuture?"#F0EDE8":bg,outline:isToday?`2px solid ${CHECK}`:"none",opacity:isFuture?0.3:1,transition:"height 0.4s ease"}}/></div>;
               })}
             </div>
-            <div style={{display:"flex",gap:3,marginTop:4}}>
-              {graphDays.map(({day})=>(
-                <div key={day} style={{flex:1,textAlign:"center",fontSize:9,color:"#CCC",fontFamily:FONT}}>{day%5===0?day:""}</div>
-              ))}
-            </div>
+            <div style={{display:"flex",gap:3,marginTop:4}}>{graphDays.map(({day})=><div key={day} style={{flex:1,textAlign:"center",fontSize:9,color:"#CCC",fontFamily:FONT}}>{day%5===0?day:""}</div>)}</div>
           </div>
           <div style={{background:"#fff",border:`1px solid ${BORDER}`,borderRadius:16,padding:"20px"}}>
             <div style={{fontSize:12,color:"#AAA",fontFamily:FONT,marginBottom:14,letterSpacing:"0.1em",textTransform:"uppercase"}}>이달 요약</div>
@@ -314,7 +242,6 @@ async function exportImage() {
   );
 }
 
-// ── 메인 앱 ───────────────────────────────────────────────
 export default function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -324,85 +251,79 @@ export default function App() {
   const [editMode, setEditMode] = useState(false);
   const [newHabit, setNewHabit] = useState("");
   const [justSaved, setJustSaved] = useState(false);
+  const cardRef = useRef(null);
 
   const today = todayKey();
   const month = monthKey();
   const {full, dow} = formatDate(today);
 
+  async function exportImage() {
+    if(!cardRef.current) return;
+    const canvas = await html2canvas(cardRef.current, { backgroundColor:"#F5F3EF", scale:2 });
+    const link = document.createElement("a");
+    link.download = `하루결_${today}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
+
+  async function requestNotification() {
+    const permission = await Notification.requestPermission();
+    if(permission==='granted') {
+      alert('알림이 설정됐어요! 😊');
+    } else {
+      alert('알림 권한이 거부됐어요. 브라우저 설정에서 허용해주세요.');
+    }
+  }
+
   useEffect(()=>{
-    supabase.auth.getSession().then(({data:{session}})=>{
-      setSession(session); setLoading(false);
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(reg => reg.unregister());
     });
+  }
+},[]);
+
+  useEffect(()=>{
+    supabase.auth.getSession().then(({data:{session}})=>{ setSession(session); setLoading(false); });
     supabase.auth.onAuthStateChange((_,session)=>{ setSession(session); setLoading(false); });
   },[]);
 
-  useEffect(()=>{
-    if(session) { loadHabits(); loadTodayRec(); }
-  },[session]);
+  useEffect(()=>{ if(session){ loadHabits(); loadTodayRec(); } },[session]);
 
   async function loadHabits() {
-    const { data } = await supabase.from("habits").select("*")
-      .eq("user_id", session.user.id).eq("month", month).order("order_index");
+    const { data } = await supabase.from("habits").select("*").eq("user_id",session.user.id).eq("month",month).order("order_index");
     setHabits(data||[]);
   }
-
   async function loadTodayRec() {
-    const { data } = await supabase.from("daily_records").select("*")
-      .eq("user_id", session.user.id).eq("date", today).single();
+    const { data } = await supabase.from("daily_records").select("*").eq("user_id",session.user.id).eq("date",today).single();
     setTodayRec(data||{checks:{},note:""});
   }
-
   async function toggleCheck(id) {
-    const checks = { ...(todayRec?.checks||{}), [id]: !todayRec?.checks?.[id] };
-    setTodayRec(prev=>({...prev, checks}));
-    await supabase.from("daily_records").upsert({
-      user_id: session.user.id, date: today,
-      checks, note: todayRec?.note||""
-    }, { onConflict: "user_id,date" });
+    const checks={...(todayRec?.checks||{}),[id]:!todayRec?.checks?.[id]};
+    setTodayRec(prev=>({...prev,checks}));
+    await supabase.from("daily_records").upsert({user_id:session.user.id,date:today,checks,note:todayRec?.note||""},{onConflict:"user_id,date"});
   }
-
-  async function setNote(val) {
-    setTodayRec(prev=>({...prev, note:val}));
-  }
-
+  async function setNote(val) { setTodayRec(prev=>({...prev,note:val})); }
   async function handleSave() {
-    await supabase.from("daily_records").upsert({
-      user_id: session.user.id, date: today,
-      checks: todayRec?.checks||{}, note: todayRec?.note||""
-    }, { onConflict: "user_id,date" });
-    setJustSaved(true);
-    setTimeout(()=>setJustSaved(false), 2000);
+    await supabase.from("daily_records").upsert({user_id:session.user.id,date:today,checks:todayRec?.checks||{},note:todayRec?.note||""},{onConflict:"user_id,date"});
+    setJustSaved(true); setTimeout(()=>setJustSaved(false),2000);
   }
-
   async function addHabit() {
     if(!newHabit.trim()||habits.length>=10) return;
-    const { data } = await supabase.from("habits").insert({
-      user_id: session.user.id, name: newHabit.trim(),
-      month, order_index: habits.length
-    }).select().single();
-    setHabits(prev=>[...prev, data]);
-    setNewHabit("");
+    const { data } = await supabase.from("habits").insert({user_id:session.user.id,name:newHabit.trim(),month,order_index:habits.length}).select().single();
+    setHabits(prev=>[...prev,data]); setNewHabit("");
   }
-
   async function removeHabit(id) {
-    await supabase.from("habits").delete().eq("id", id);
+    await supabase.from("habits").delete().eq("id",id);
     setHabits(prev=>prev.filter(h=>h.id!==id));
   }
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-  }
+  async function handleLogout() { await supabase.auth.signOut(); }
 
   const checkedCount = habits.filter(h=>todayRec?.checks?.[h.id]).length;
-  const pct = habits.length>0 ? Math.round(checkedCount/habits.length*100) : 0;
+  const pct = habits.length>0?Math.round(checkedCount/habits.length*100):0;
 
-  if(loading) return (
-    <div style={{minHeight:"100vh",background:SOFT,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FONT,color:"#AAA"}}>
-      불러오는 중...
-    </div>
-  );
-
-  if(!session) return <LoginScreen />;
+  if(loading) return <div style={{minHeight:"100vh",background:SOFT,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:FONT,color:"#AAA"}}>불러오는 중...</div>;
+  if(!session) return <LoginScreen/>;
 
   return (
     <div style={s.root}>
@@ -420,13 +341,20 @@ export default function App() {
           </div>
         </div>
       </header>
-
       <main style={s.main}>
         {view==="today"&&(
-          <div style={s.page}>
+          <div style={s.page} ref={cardRef}>
             <div>
-              <div style={s.dateMain}>{full}</div>
-              <div style={s.dateSub}>{dow}</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+  <div>
+    <div style={s.dateMain}>{full}</div>
+    <div style={s.dateSub}>{dow}</div>
+  </div>
+  <button onClick={requestNotification}
+    style={{background:"none",border:`1px solid ${BORDER}`,borderRadius:20,padding:"6px 12px",fontSize:12,color:"#999",cursor:"pointer",fontFamily:FONT}}>
+    🔔 알림
+  </button>
+</div>
             </div>
             <div style={s.ringWrap}>
               <svg width="96" height="96" style={{transform:"rotate(-90deg)"}}>
@@ -436,17 +364,11 @@ export default function App() {
                   strokeDashoffset={`${2*Math.PI*40*(1-pct/100)}`}
                   style={{transition:"stroke-dashoffset 0.6s cubic-bezier(0.16,1,0.3,1)"}}/>
               </svg>
-              <div style={s.ringLabel}>
-                <span style={s.ringPct}>{pct}<span style={s.ringUnit}>%</span></span>
-              </div>
+              <div style={s.ringLabel}><span style={s.ringPct}>{pct}<span style={s.ringUnit}>%</span></span></div>
             </div>
             <div style={s.ringCaption}>{habits.length>0?`${checkedCount} / ${habits.length} 완료`:(
-  <button onClick={()=>setView("habits")}
-    style={{background:ACCENT,color:"#fff",border:"none",borderRadius:20,
-      padding:"8px 20px",fontSize:13,cursor:"pointer",fontFamily:FONT,fontWeight:600}}>
-    + 습관 설정하기
-  </button>
-)}</div>
+              <button onClick={()=>setView("habits")} style={{background:ACCENT,color:"#fff",border:"none",borderRadius:20,padding:"8px 20px",fontSize:13,cursor:"pointer",fontFamily:FONT,fontWeight:600}}>+ 습관 설정하기</button>
+            )}</div>
             {habits.length>0&&(
               <div style={s.checkList}>
                 {habits.map(h=>{
@@ -463,20 +385,11 @@ export default function App() {
             )}
             <div>
               <div style={s.noteLabel}>오늘 한 줄</div>
-              <input value={todayRec?.note||""} onChange={e=>setNote(e.target.value)}
-                placeholder="오늘 하루를 한 문장으로..." style={s.noteInput} maxLength={80}/>
+              <input value={todayRec?.note||""} onChange={e=>setNote(e.target.value)} placeholder="오늘 하루를 한 문장으로..." style={s.noteInput} maxLength={80}/>
             </div>
             <button onClick={handleSave} style={{...s.saveBtn,...(justSaved?{background:CHECK}:{})}}>{justSaved?"✓  저장됐어요":"저장"}</button>
-            <button onClick={exportImage}
-  style={{ width:"100%", padding:"13px",
-    background:"#fff", border:`1px solid ${BORDER}`,
-    borderRadius:14, color:ACCENT, fontSize:14,
-    cursor:"pointer", fontFamily:FONT, fontWeight:500 }}>
-  📷 오늘 기록 이미지로 저장
-</button>
           </div>
         )}
-
         {view==="habits"&&(
           <div style={s.page}>
             <div style={s.pageTitle}>
@@ -484,8 +397,7 @@ export default function App() {
                 <div style={s.pageTitleMain}>이달의 습관</div>
                 <div style={s.pageTitleSub}>{new Date().getMonth()+1}월 · 최대 10개</div>
               </div>
-              <button onClick={()=>setEditMode(!editMode)}
-                style={{...s.editToggle,...(editMode?{background:ACCENT,color:"#fff",borderColor:ACCENT}:{})}}>{editMode?"완료":"편집"}</button>
+              <button onClick={()=>setEditMode(!editMode)} style={{...s.editToggle,...(editMode?{background:ACCENT,color:"#fff",borderColor:ACCENT}:{})}}>{editMode?"완료":"편집"}</button>
             </div>
             <div style={s.habitList}>
               {habits.map((h,i)=>(
@@ -499,15 +411,12 @@ export default function App() {
             </div>
             {habits.length<10?(
               <div style={s.addRow}>
-                <input value={newHabit} onChange={e=>setNewHabit(e.target.value)}
-                  onKeyDown={e=>e.key==="Enter"&&addHabit()}
-                  placeholder="새 습관 추가..." style={s.addInput} maxLength={30}/>
+                <input value={newHabit} onChange={e=>setNewHabit(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addHabit()} placeholder="새 습관 추가..." style={s.addInput} maxLength={30}/>
                 <button onClick={addHabit} style={s.addBtn}>+</button>
               </div>
             ):<div style={s.maxNote}>10개 모두 설정됐어요 👍</div>}
           </div>
         )}
-
         {view==="history"&&<HistoryCalendar userId={session.user.id}/>}
       </main>
     </div>
